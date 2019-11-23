@@ -18,12 +18,15 @@ public class PlayerController : MonoBehaviour
     public bool yInverse = false;
     public bool xInverse = false;
     bool onGround = true;
-    public bool onWallRight = false;
-    public bool onWallLeft = false;
+    bool onWallRight = false;
+    bool onWallLeft = false;
+    bool onWallFront = false;
+    bool onWallFrontUp = false;
 
     public float moveSpeed = 10.0f;
 
     GameObject player;
+    GameObject playerCamera;
     GameObject[] building;
 
     private Rigidbody rBody;
@@ -34,6 +37,7 @@ public class PlayerController : MonoBehaviour
         Cursor.lockState = CursorLockMode.Locked;
 
         rBody = GetComponent<Rigidbody>();
+        playerCamera = GameObject.Find("Camera");
     }
 
    
@@ -61,7 +65,8 @@ public class PlayerController : MonoBehaviour
         yrot = yInverse ? yrot * -1 : yrot;
         xrot = xInverse ? xrot * -1 : xrot;
 
-        transform.Rotate(yrot, xrot, 0);
+        transform.Rotate(0, xrot, 0);
+        playerCamera.transform.Rotate(yrot, 0, 0);
 
         transform.rotation = Quaternion.Euler(transform.rotation.eulerAngles.x, transform.rotation.eulerAngles.y, 0);
     }
@@ -126,7 +131,10 @@ public class PlayerController : MonoBehaviour
 
     public void Grab()
     {
-
+        if (Input.GetKeyDown(KeyCode.Q) && onWallFront && !onWallFrontUp)
+        {
+            rBody.velocity = new Vector3(0, 5f, 0.5f);
+        }
     }
 
     public void Jump()
@@ -137,6 +145,11 @@ public class PlayerController : MonoBehaviour
             {
                 rBody.AddForce(new Vector3(0, jumpForce * 100, 0));
                 rBody.velocity = transform.forward * moveSpeed;
+            }
+            else if (onWallRight || onWallLeft)
+            {
+                rBody.AddForce(new Vector3(0, jumpForce * 100, 0));
+                rBody.velocity = -rBody.velocity;
             }
         }
     }
@@ -149,9 +162,15 @@ public class PlayerController : MonoBehaviour
         Debug.DrawRay(transform.position, new Vector3(0, -1, 0) * 1.05f, Color.red);
 
         onWallRight = Physics.Raycast(transform.position, new Vector3(1f, 0, 0), 0.55f);
-        Debug.DrawRay(transform.position, new Vector3(1f, 0, 0) * 0.55f, Color.red);
+        Debug.DrawRay(transform.position, transform.right * 0.55f, Color.red);
 
         onWallLeft = Physics.Raycast(transform.position, new Vector3(-1f, 0, 0), 0.55f);
-        Debug.DrawRay(transform.position, new Vector3(-1f, 0, 0) * 0.55f, Color.red);
+        Debug.DrawRay(transform.position, -transform.right * 0.55f, Color.red);
+
+        onWallFront = Physics.Raycast(transform.position, transform.forward, 0.55f);
+        Debug.DrawRay(transform.position, transform.forward * 0.55f, Color.red);
+
+        onWallFrontUp = Physics.Raycast(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), transform.forward, 0.7f);
+        Debug.DrawRay(new Vector3(transform.position.x, transform.position.y + 1, transform.position.z), transform.forward * 0.7f, Color.red);
     }
 }
